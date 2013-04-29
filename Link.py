@@ -1,7 +1,10 @@
 from SimPy.Simulation import *
 
-class Link:
-  def __init__(self, propdelay, destination):
+retransmission_timeout = 10
+
+
+
+class Link(Resource):
+  def setup(self, destination, delay):
     self.destination = destination
-    self.propdelay = propdelay
-    self.resource = Resource(capacity=3)
+    self.delay = delay

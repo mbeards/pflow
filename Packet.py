@@ -1,22 +1,36 @@
 from SimPy.Simulation import *
 
-
-retransmission_timeout = 10
+retransmission_timeout=10
 
 class Packet(Process):
-  def move(self, link):
-    enqueue_time = now()
-    yield request, self, link.resource
-    trans_time = now()
 
-    if(trans_time - enqueue_time > retransmission_timeout):
-      yield release, self, link.resource
-      return
+  def run(self, startnode):
 
-    yield hold, self, link.propdelay
-    yield release, self, link.resource
-    #print now(), self.name, "Finished moving down", link.resource.name
-    travel_time = now() - enqueue_time 
+    current_node = startnode
 
-    #hand off the packet to the destination node
-    activate(link.destination, link.destination.deliver(self))
+    while(True):
+      link = current_node.get_route()
+      #transmit down link "link"
+      enqueue_time = now()
+      yield request, self, link #request space on the link
+      send_time = now()
+      print "sent after", send_time - enqueue_time
+
+      #drop packet if link is full, continue otherwise
+      if(send_time - enqueue_time > retransmission_timeout):
+        print "Dropped packet after waiting", send_time-enqueue_time
+        yield release, self, link
+        return
+      yield hold, self, link.delay
+      yield release, self, link
+      travel_time = now() - enqueue_time
+      print "Sent packet in ", travel_time
+
+      #transmission complete
+
+      #ask current node where to go
+      break 
+
+
+
+
