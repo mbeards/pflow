@@ -39,9 +39,9 @@ class Node:
     self.rib.append(r)
 
   def get_route(self, ip):
-    #print "\nEntire RIB", self.rib
+    print "\nEntire RIB", self.rib
     routes = filter(lambda x: x.match(ip), self.rib)
-    #print "All routes to", IPAddress(ip), ":", routes
+    print "All routes to", IPAddress(ip), ":", routes
     routes.sort(key=(lambda x: x.length))
     print "Best route to", IPAddress(ip), "is", routes[-1]
     return routes[-1].link

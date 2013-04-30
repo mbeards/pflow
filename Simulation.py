@@ -2,10 +2,12 @@ from SimPy.Simulation import *
 from Link import *
 from Packet import *
 from Node import *
+import Experiment
 
 
 
 initialize()
+
 
 
 n1 = Node(name="Node1")
@@ -52,7 +54,9 @@ n3.add_route(Route(IPNetwork("10/8"), link31, 0))
 n4.add_route(Route(IPNetwork("10/8"), link43, 0))
 
 
-activate(n1.generator, n1.generator.generate(number=4), at=0.0)
+activate(n1.generator, n1.generator.generate(number=120), at=0.0)
 #activate(n2.generator, n2.generator.generate(number=100), at=0.0)
 
 simulate(until=2000)
+
+Experiment.print_rtts()
