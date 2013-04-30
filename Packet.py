@@ -28,8 +28,12 @@ class Packet(Process):
 
       #transmission complete
 
-      #ask current node where to go
-      break 
+      #At the next node
+      current_node = link.destination
+      print "Arrived at", current_node.name
+
+      if(current_node.get_route() == None):
+        break
 
 
 
