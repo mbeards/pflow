@@ -63,10 +63,11 @@ class Node:
     return False
 
 
-
 class Generator(Process):
   def generate(self, number):
     for i in range(number):
+      if(i==0):
+        continue
       ipstr = "10."+str((i%4)+1)+".0.1"
 
       p = Packet(name="packet")

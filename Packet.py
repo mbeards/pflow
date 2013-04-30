@@ -12,9 +12,17 @@ class Packet(Process):
     while(True):
       print self, "Arrived at", current_node.name
 
+      #info to flowtimer goes here
+
       if(current_node.isowned(self.ip_dst)):
         print "Arrived at destination prefix"
-        break
+
+        yield hold, self, 0.5
+        #turn around
+        tmp = self.ip_dst
+        self.ip_dst = self.ip_src
+        self.ip_src = tmp
+        continue
 
       if(current_node.get_route(self.ip_dst) == None):
         break
