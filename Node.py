@@ -73,6 +73,7 @@ class Generator(Process):
       p = Packet(name="packet")
       p.ip_dst = int(IPAddress(ipstr))
       p.ip_src = self.parent.ip
+      p.resp = False
 
       activate(p, p.run(self.parent))
       yield hold, self, 1

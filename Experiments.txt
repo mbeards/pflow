@@ -1,0 +1,9 @@
+
+
+Measure average RTT vs Pawared Utilization:
+  -All nodes
+  -NonPaware <-> NonPaware
+  -Paware<->NonPaware
+  -Paware<->Paware
+
+Look at different bandwidth utilization

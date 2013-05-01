@@ -19,6 +19,11 @@ class Packet(Process):
 
         yield hold, self, 0.5
         #turn around
+
+        if(self.resp):
+          #packet is a response
+          break
+        self.resp = True
         tmp = self.ip_dst
         self.ip_dst = self.ip_src
         self.ip_src = tmp
