@@ -1,15 +1,10 @@
 from SimPy.Simulation import *
 
+#Entry format: (timestamp, rtt, src_mode, dst_mode)
 rtt_table = []
 
-def add_rtt(rtt, srcip, dstip):
-  #if(srcnode.paware and dstnode.paware):
-  #  rtt_table.append((rtt, now(), 2))
-  #elif(srcnode.paware or dstnode.paware):
-  #  rtt_table.append((rtt, now(), 1))
-  #else:
-  #  rtt_table.append((rtt, now(), 0))
-  rtt_table.append((rtt, now()))
+def add_rtt(rtt, srcnode, dstnode):
+  rtt_table.append((now(), rtt, srcnode.paware, dstnode.paware))
 
 def print_rtts():
   print rtt_table

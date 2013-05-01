@@ -9,6 +9,7 @@ class Packet(Process):
   def run(self, startnode):
 
     current_node = startnode
+    self.src_node = startnode
     self.timestamp = now()
 
     while(True):
@@ -24,12 +25,13 @@ class Packet(Process):
 
         if(self.resp):
           #packet is a response
-          Experiment.add_rtt(now() - self.timestamp, self.ip_dst, self.ip_src)
+          Experiment.add_rtt(now() - self.timestamp, self.src_node, self.dst_node)
           break
         self.resp = True
         tmp = self.ip_dst
         self.ip_dst = self.ip_src
         self.ip_src = tmp
+        self.dst_node = current_node
         continue
 
       if(current_node.get_route(self.ip_dst) == None):

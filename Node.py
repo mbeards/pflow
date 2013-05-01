@@ -31,6 +31,7 @@ class Node:
     self.netmask = 0
     self.prefix = None
     self.rib = []
+    self.paware = False
 
   def add_link(self, l):
     self.links.append(l)
