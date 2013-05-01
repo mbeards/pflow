@@ -1,5 +1,6 @@
 from SimPy.Simulation import *
 from netaddr import *
+import Experiment
 
 retransmission_timeout=10
 
@@ -8,6 +9,7 @@ class Packet(Process):
   def run(self, startnode):
 
     current_node = startnode
+    self.timestamp = now()
 
     while(True):
       print self, "Arrived at", current_node.name
@@ -27,6 +29,7 @@ class Packet(Process):
         tmp = self.ip_dst
         self.ip_dst = self.ip_src
         self.ip_src = tmp
+        Experiment.add_rtt(now() - self.timestamp, self.ip_dst, self.ip_src)
         continue
 
       if(current_node.get_route(self.ip_dst) == None):
