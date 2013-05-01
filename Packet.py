@@ -24,12 +24,12 @@ class Packet(Process):
 
         if(self.resp):
           #packet is a response
+          Experiment.add_rtt(now() - self.timestamp, self.ip_dst, self.ip_src)
           break
         self.resp = True
         tmp = self.ip_dst
         self.ip_dst = self.ip_src
         self.ip_src = tmp
-        Experiment.add_rtt(now() - self.timestamp, self.ip_dst, self.ip_src)
         continue
 
       if(current_node.get_route(self.ip_dst) == None):
