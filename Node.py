@@ -33,6 +33,15 @@ class Node:
     self.rib = []
     self.paware = False
 
+  def __repr__(self):
+    if(self.paware):
+      return "Paware " + self.name +" "+str(self.prefix)
+    else:
+      return "naware " + self.name +" "+str(self.prefix)
+
+  def list_links(self):
+    return str(self.links)
+
   def add_link(self, l):
     self.links.append(l)
 
