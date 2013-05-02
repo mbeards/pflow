@@ -18,7 +18,7 @@ class Route:
     return False
 
   def __repr__(self):
-    return str(self.prefix)+" "+self.link.name
+    return str(self.prefix)+" "+self.link.name+" "+str(self.hopcount)
 
 
 class Node:
@@ -27,7 +27,7 @@ class Node:
     self.generator = Generator(name="packetsource")
     self.generator.parent = self
     self.links = []
-    self.ip = 0
+    #self.ip = 0
     self.netmask = 0
     self.prefix = None
     self.rib = []
@@ -60,7 +60,7 @@ class Node:
     return self.link
 
   def setprefix(self, prefix):
-    self.ip = int(prefix.ip)
+    #self.ip = int(prefix.ip)
     self.netmask = int(prefix.netmask)
     self.prefix = prefix
 
