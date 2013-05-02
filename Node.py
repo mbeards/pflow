@@ -20,6 +20,13 @@ class Route:
   def __repr__(self):
     return str(self.prefix)+" "+self.link.name+" "+str(self.hopcount)
 
+  def __cmp__(self, other):
+    if self.ip == other.ip and self.netmask==other.netmask and self.link==other.link:
+      return 0
+    if self.netmask > other.netmask:
+      return 1
+    return -1
+
 
 class Node:
   def __init__(self, name):
@@ -35,9 +42,9 @@ class Node:
 
   def __repr__(self):
     if(self.paware):
-      return "Paware " + self.name +" "+str(self.prefix)
+      return "Paware " + self.name +" "+str(self.prefix) + "\n"+str(self.rib)
     else:
-      return "naware " + self.name +" "+str(self.prefix)
+      return "naware " + self.name +" "+str(self.prefix)+"\n" + str(self.rib)
 
   def list_links(self):
     return str(self.links)
