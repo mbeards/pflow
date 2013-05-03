@@ -12,7 +12,7 @@ linktable = {}
 
 cbgpcommands = []
 
-route_header_re = re.compile("AS([0-9]+), AS[0-9]+:10\.0\.[0-9]+\.1, 10\.0\.([0-9])+\.0\/24")
+route_header_re = re.compile("AS([0-9]+), AS[0-9]+:10\.0\.[0-9]+\.1, 10\.0\.([0-9]+)\.0\/24")
 route_re = re.compile("\*[> ] 10\.0\.[0-9]+\.0/24\t10\.0\.([0-9]+)\.1 *")
 
 def setup_node(i):
@@ -81,6 +81,7 @@ def generate_topology(size):
   p = subprocess.Popen(["cbgp"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
   cbgp_stdout = p.communicate(input="\n".join(cbgpcommands))[0]
+  #sys.stderr.write(cbgp_stdout)
   cbgp_stdout = cbgp_stdout.splitlines()
 
 
@@ -94,6 +95,7 @@ def generate_topology(size):
 
 
   for line in cbgp_stdout:
+    #print state, linee
     if route_header_re.match(line):
       m = route_header_re.match(line)
       state = 1
@@ -107,6 +109,7 @@ def generate_topology(size):
       nexthopid = r.group(1)
       l = linktable[str(srcid)+"."+str(nexthopid)]   
       bestroute = Route(IPNetwork("10.0."+str(dstid)+".0/24"), l, 0)
+      allroutes.append(bestroute)
       state = 3
     elif state == 3 and line == "[ Shortest AS-PATH ]":
       state = 4
@@ -116,21 +119,22 @@ def generate_topology(size):
       l = linktable[str(srcid)+"."+str(nexthopid)]   
       rt = Route(IPNetwork("10.0."+str(dstid)+".0/24"), l, 0)
       allroutes.append(rt)
-    elif state ==4 or (grab_flag and line == "Debug Decision Process" and state!=0):
-      grab_flag = True
+    elif state ==4 or (line == "[ Best route ]" and state!=0):
       state = 0
-      if (not bestroute in allroutes):
-        allroutes.append(bestroute)
-      #print allroutes
-      nodes[int(srcid)].rib.extend(allroutes)
+      nodes[int(srcid)].rib.extend(set(allroutes))
       allroutes = []
       srcid = -1
       dstid = -1
 
   for node in nodes:
-    if(len(node.rib) < size-1):
-      print "Missing some routes, rebuild topology"
-      exit(-1)
+    for i in range(size):
+      if i == nodes.index(node):
+        continue
+      l = filter(lambda x: str(x.prefix)==("10.0."+str(i)+".0/24"), node.rib)
+      if len(l) == 0:
+        print "Missing route from ", node.prefix, "to 10.0."+str(i)+".0/24"
+        print node.prefix, "RIB:", node.rib
+
     
   return nodes
 
