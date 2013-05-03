@@ -61,7 +61,7 @@ class Node:
   def add_route(self, r):
     self.rib.append(r)
 
-  def get_route(self, ip, lasthop):
+  def get_route(self, ip, lasthop, packet):
     #print "\nEntire RIB", self.rib
     routes = filter(lambda x: x.match(ip), self.rib)#and x.link.destination!=lasthop, self.rib)
     #print "All routes to", IPAddress(ip), ":", routes

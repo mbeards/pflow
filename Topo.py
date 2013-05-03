@@ -48,13 +48,16 @@ def generate_topology(size):
     #foreach neighbor
     for neighbor in g[node].keys():
       #add a link to the neighbor
-      link = Link(name=("Link"+str(node)+"-"+str(neighbor)), capacity=4) #need to vary link capacity, but don't worry yet
+      cap = random.randint(4,12)
+
+      link = Link(name=("Link"+str(node)+"-"+str(neighbor)), capacity=cap) #need to vary link capacity, but don't worry yet
 
       #map node IPs to link pointers
       labelstr = str(node) +"."+ str(neighbor)
       revlabelstr = str(neighbor) +"."+ str(node)
 
-      link.setup(nodes[neighbor], 25) #set propdelay and destination
+      delay = random.randint(1,4)*cap
+      link.setup(nodes[neighbor], delay) #set propdelay and destination
 
       if(not revlabelstr in linktable):
         #Only set up the link if it doesn't already exist in reverse

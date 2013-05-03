@@ -37,11 +37,11 @@ class Packet(Process):
         self.last_node = None
         continue
 
-      if(current_node.get_route(self.ip_dst, last_node) == None):
-        print "Dropped packet: unavailable route"
-        break
+      #if(current_node.get_route(self.ip_dst, last_node) == None):
+      #  print "Dropped packet: unavailable route"
+      #  break
 
-      link = current_node.get_route(self.ip_dst, last_node)
+      link = current_node.get_route(self.ip_dst, last_node, self)
       yield hold, self, current_node.forward_delay
       #transmit down link "link"
       enqueue_time = now()

@@ -20,7 +20,7 @@ def runsim():
   for n in random.sample(nodes, Experiment.size/2):
     activate(n.generator, n.generator.generate(), at=0.0)
 
-  simulate(until=20000)
+  simulate(until=100000)
 
   Experiment.print_rtts()
 
