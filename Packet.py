@@ -26,8 +26,10 @@ class Packet(Process):
 
         if(self.resp):
           #packet is a response
-          #print "Turning around"
           Experiment.add_rtt(now() - self.timestamp, self.src_node, self.dst_node)
+          if self.probe:
+            current_node.probe_return(self)
+
           break
         self.resp = True
         tmp = self.ip_dst
@@ -68,5 +70,8 @@ class Packet(Process):
 
 
   def __str__(self):
-    return str(IPAddress(self.ip_src))+"->"+str(IPAddress(self.ip_dst))
+    s = ""
+    if self.probe:
+      s="p"
+    return str(IPAddress(self.ip_src))+"->"+str(IPAddress(self.ip_dst))+s
 

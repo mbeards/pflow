@@ -6,8 +6,9 @@ import Experiment
 from Topo import *
 
 Experiment.size = int(sys.argv[1])
-print "Building topology of", Experiment.size, "nodes"
-nodes = generate_topology(Experiment.size)
+Experiment.pnodes = int(sys.argv[2])
+#print "Building topology of", Experiment.size, "nodes with", sys.argv[2], "paware enabled"
+nodes = generate_topology(Experiment.size, Experiment.pnodes)
 
 
 def runsim():
@@ -15,13 +16,15 @@ def runsim():
   Experiment.packet_count = 0
   Experiment.drop_count = 0
 
-  print "Beginning simulation"
+  #print "Beginning simulation"
 
   for n in random.sample(nodes, Experiment.size/2):
     activate(n.generator, n.generator.generate(), at=0.0)
 
-  simulate(until=1000)#00)
+  simulate(until=10000)
 
-  Experiment.print_rtts()
+  #Experiment.print_rtts()
+  print Experiment.size, Experiment.pnodes, Experiment.packet_count, Experiment.drop_count, Experiment.rtt()
+
 
 runsim()

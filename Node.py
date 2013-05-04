@@ -11,7 +11,16 @@ class Route:
     self.length = prefix.prefixlen
     self.link = link
     self.hopcount = hopcount
-    self.rttval = -1
+    self.rttval = 999
+    self.timestamp = 0
+
+  def rtt(self, rtt):
+    self.timestamp = now()
+    if self.rttval == 999:
+      self.rttval = rtt
+    else:
+      #Moving average
+      self.rttval = (0.5*rtt)+ (0.5 * self.rttval)
   
   #Takes IP as an Int!
   def match(self, ip):
@@ -20,7 +29,7 @@ class Route:
     return False
 
   def __repr__(self):
-    return str(self.prefix)+" "+self.link.name+" "+str(self.hopcount)
+    return str(self.prefix)+" "+self.link.name+" rtt " + str(self.rttval)
 
   def __cmp__(self, other):
     if self.ip == other.ip and self.netmask==other.netmask and self.link==other.link:
@@ -30,7 +39,17 @@ class Route:
     return -1
 
   def __hash__(self):
-    return hash(self.ip) ^ hash(self.netmask) ^ hash(self.link.destination)
+   return hash(self.ip) ^ hash(self.netmask) ^ hash(self.link.destination)
+
+class Flow:
+  #expiry: 0=open, 1=matched
+  def __init__(self, ip_src, ip_dst, timestamp, last_seen, route, expiry):
+    self.ip_src = ip_src
+    self.ip_dst = ip_dst
+    self.timestamp = timestamp
+    self.last_seen = last_seen
+    self.route = route
+    self.expiry = 0
 
 
 class Node:
@@ -45,12 +64,13 @@ class Node:
     self.rib = []
     self.paware = False
     self.forward_delay = random.randint(0,5)
+    self.flow_table = []
 
   def __repr__(self):
     if(self.paware):
-      return "Paware " + self.name +" "+str(self.prefix) + "\n"+str(self.rib)
+      return "Paware " + self.name +" "+str(self.prefix)
     else:
-      return "naware " + self.name +" "+str(self.prefix)+"\n" + str(self.rib)
+      return "naware " + self.name +" "+str(self.prefix)
 
   def list_links(self):
     return str(self.links)
@@ -62,18 +82,65 @@ class Node:
     self.rib.append(r)
 
   def get_route(self, ip, lasthop, packet):
-    #print "\nEntire RIB", self.rib
+    if(self.paware):
+      return self.p_get_route(ip, lasthop, packet)
     routes = filter(lambda x: x.match(ip), self.rib)#and x.link.destination!=lasthop, self.rib)
-    #print "All routes to", IPAddress(ip), ":", routes
     routes.sort(key=(lambda x: x.length))
-    #print "Best route to", IPAddress(ip), "is", routes[-1]
     if(len(routes) == 0):
       print "Finding route to", IPAddress(ip), "from", self, "lasthop was", lasthop
       print self.rib
     return routes[-1].link
-    
 
-    return self.link
+  def p_get_route(self, ip, lasthop, packet):
+    #check for flow table matches
+    forward_matches = filter(lambda x: (x.ip_src == packet.ip_src and x.ip_dst == packet.ip_dst), self.flow_table)
+    reverse_matches = filter(lambda x: (x.ip_dst == packet.ip_src and x.ip_src == packet.ip_dst), self.flow_table)
+
+    routes = filter(lambda x: x.match(ip), self.rib)#and x.link.destination!=lasthop, self.rib)
+    oldroutes = filter(lambda x: now()-x.timestamp > 100 or x.rttval == 999, routes)
+
+    if(len(oldroutes)>0):
+      outroute = routes[0]
+      #print "need to check an old route!"
+    else:
+      routes.sort(key=(lambda x: x.rttval))
+      outroute = routes[-1]
+
+    if(len(forward_matches) > 0) and not packet.resp:
+      f = forward_matches[0]
+      if f.expiry == 1:
+        f.expiry = 0
+        f.timestamp = now()
+      elif f.expiry == 2:
+        f.expiry = 1
+        return f.route.link
+      else:
+        if (now() - f.timestamp > 100):
+          f.expiry = 2
+          p = Packet(name="packet")
+          p.ip_dst = packet.ip_dst
+          p.ip_src = self.ip
+          p.resp = False
+          p.probe = True
+          activate(p, p.run(self))
+
+    elif(len(reverse_matches) > 0):
+      #if(reverse_matches[0].expiry == 2):
+        #print "ping came back"
+      #also cool
+      rtt = now() - reverse_matches[0].timestamp
+      reverse_matches[0].route.rtt(rtt)
+      self.flow_table.remove(reverse_matches[0])
+    else:
+      self.flow_table.append(Flow(packet.ip_src, packet.ip_dst, now(), now(), outroute, 0))
+    return outroute.link
+   
+  def probe_return(self, packet):
+    reverse_matches = filter(lambda x: (x.ip_dst == packet.ip_src and x.ip_src == packet.ip_dst), self.flow_table)
+    if(len(reverse_matches)>0):
+      rtt=now()-reverse_matches[0].timestamp
+      reverse_matches[0].route.rtt(rtt)
+      self.flow_table.remove(reverse_matches[0])
 
   def setprefix(self, prefix):
     self.ip = int(prefix.ip)
@@ -100,6 +167,7 @@ class Generator(Process):
       p.ip_dst = int(IPAddress(ipstr))
       p.ip_src = self.parent.ip
       p.resp = False
+      p.probe = False
 
       activate(p, p.run(self.parent))
       yield hold, self, random.randint(1, 4)

@@ -27,7 +27,7 @@ def setup_node(i):
   cbgpcommands.append("bgp router " + str(n.prefix[1]) + " add network " + str(n.prefix))
   return n
 
-def generate_topology(size):
+def generate_topology(size, pcount):
 
   #make nodes
   nodes = [setup_node(i) for i in range(size)]
@@ -41,6 +41,9 @@ def generate_topology(size):
 
 
   #set up links
+
+  for pnode in random.sample(nodes, pcount):
+    pnode.paware=True
 
   #foreach node
   for node in g:
