@@ -91,7 +91,18 @@ class Node:
       print self.rib
     return routes[-1].link
 
+  def ftableclean(self):
+    ft = filter(lambda x: (x.expiry == 2 and now()-x.timestamp > 100), self.flow_table)
+    for f in ft:
+      f.route.rtt(500) #300 as upper val for now.  probs needs to be proportional to table size?
+      self.flow_table.remove(f)
+      #print "marked bad flow", f
+      
+    
+
   def p_get_route(self, ip, lasthop, packet):
+    self.ftableclean()
+
     #check for flow table matches
     forward_matches = filter(lambda x: (x.ip_src == packet.ip_src and x.ip_dst == packet.ip_dst), self.flow_table)
     reverse_matches = filter(lambda x: (x.ip_dst == packet.ip_src and x.ip_src == packet.ip_dst), self.flow_table)

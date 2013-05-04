@@ -59,7 +59,7 @@ def generate_topology(size, pcount):
       labelstr = str(node) +"."+ str(neighbor)
       revlabelstr = str(neighbor) +"."+ str(node)
 
-      delay = random.randint(1,4)*cap
+      delay = random.randint(1,8)*cap
       link.setup(nodes[neighbor], delay) #set propdelay and destination
 
       if(not revlabelstr in linktable):
