@@ -9,9 +9,9 @@ Experiment.size = int(sys.argv[1])
 print "Building topology of", Experiment.size, "nodes"
 nodes = generate_topology(Experiment.size)
 
-initialize()
 
 def runsim():
+  initialize()
   Experiment.packet_count = 0
   Experiment.drop_count = 0
 
@@ -20,7 +20,7 @@ def runsim():
   for n in random.sample(nodes, Experiment.size/2):
     activate(n.generator, n.generator.generate(), at=0.0)
 
-  simulate(until=100000)
+  simulate(until=1000)#00)
 
   Experiment.print_rtts()
 
