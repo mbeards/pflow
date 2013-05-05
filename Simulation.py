@@ -5,6 +5,7 @@ from Node import *
 import Experiment
 from Topo import *
 import sys
+import copy
 
 Experiment.size = int(sys.argv[1])
 Experiment.pnodes = int(sys.argv[2])
@@ -12,7 +13,7 @@ Experiment.pnodes = int(sys.argv[2])
 nodes = generate_topology(Experiment.size, Experiment.pnodes)
 
 
-def runsim():
+def runsim(nodes):
   initialize()
   Experiment.packet_count = 0
   Experiment.drop_count = 0
@@ -39,7 +40,10 @@ def runsim():
     if len(unmeasuredroutes) >0:
       print n, "has unmeasured routes", unmeasuredroutes, "full rib", n.rib
 
+  for n in nodes:
+    print n.rib
 
 
 
-runsim()
+
+runsim(nodes)

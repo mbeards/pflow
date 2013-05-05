@@ -10,4 +10,6 @@ class Link(Resource):
     self.delay = delay
 
   def __str__(self):
-    return "link to " + str(self.destination)
+    return self.name + "del:"+str(self.delay)+"cap"+str(self.capacity)
+
+

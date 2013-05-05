@@ -28,16 +28,15 @@ def setup_node(i):
   return n
 
 def generate_topology(size, pcount):
-
+  
   #make nodes
   nodes = [setup_node(i) for i in range(size)]
 
-  
   g = nx.barabasi_albert_graph(size, 1)
   
-  for i in range(size):
-    edges = random.sample(g.nodes(), 2)
-    g.add_edge(edges[0], edges[1])
+  #for i in range(size):
+  #  edges = random.sample(g.nodes(), 2)
+  #  g.add_edge(edges[0], edges[1])
 
 
   #set up links
@@ -121,7 +120,7 @@ def generate_topology(size, pcount):
       bestroute = Route(IPNetwork("10.0."+str(dstid)+".0/24"), l, 0)
       allroutes.append(bestroute)
       state = 3
-    elif state == 3 and line == "[ Shortest AS-PATH ]":
+    elif state >= 3 and (line == "[ Shortest AS-PATH ]" or line == "[ Eligible routes: ]"):
       state = 4
     elif state == 4 and route_re.match(line):
       r = route_re.match(line)

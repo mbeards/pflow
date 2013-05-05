@@ -30,7 +30,7 @@ class Route:
     return False
 
   def __repr__(self):
-    return str(self.prefix)+" "+self.link.name+" rtt " + str(self.rttval)
+    return str(self.prefix)+" "+str(self.link)+" rtt " + str(self.rttval)
 
   def __cmp__(self, other):
     if self.ip == other.ip and self.netmask==other.netmask and self.link==other.link:
@@ -96,7 +96,6 @@ class Node:
     ft = filter(lambda x: (x.expiry == 2 and now()-x.timestamp > 600), self.flow_table)
     for f in ft:
       f.route.rtt(500) #300 as upper val for now.  probs needs to be proportional to table size?
-      print "unreturned ping"
       self.flow_table.remove(f)
 
       
