@@ -129,6 +129,8 @@ class Node:
       else:
         if (now() - f.timestamp > 100):
           f.expiry = 2
+          Experiment.packet_count = Experiment.packet_count+1
+          Experiment.probe_count = Experiment.probe_count+1
           p = Packet(name="packet")
           p.ip_dst = packet.ip_dst
           p.ip_src = self.ip

@@ -7,17 +7,24 @@ from Topo import *
 import sys
 import copy
 
+if(len(sys.argv) < 4):
+  print "Usage: python " + sys.argv[0] + "TopologySize TopologyCount Iterations"
+  exit()
+
 Experiment.size = int(sys.argv[1])
+topologies = int(sys.argv[2])
+iterations = int(sys.argv[3])
+
 Experiment.weightavg = 0
 #Experiment.pnodes = int(sys.argv[2])
 #print "Building topology of", Experiment.size, "nodes with", sys.argv[2], "paware enabled"
-nodes = generate_topology(Experiment.size)
 
 
 def runsim(g):
   initialize()
   Experiment.packet_count = 0
   Experiment.drop_count = 0
+  Experiment.probe_count = 0
 
   #print "Beginning simulation"
   nodes = setup_nodes(g, Experiment.size, Experiment.pnodes)
@@ -30,7 +37,7 @@ def runsim(g):
   simulate(until=10000)
 
   #Experiment.print_rtts()
-  print Experiment.size, Experiment.pnodes, Experiment.weightavg, Experiment.packet_count, Experiment.drop_count, Experiment.rtt()
+  print Experiment.size, Experiment.pnodes, Experiment.weightavg, Experiment.packet_count, Experiment.drop_count, Experiment.probe_count, (1.0*Experiment.drop_count)/(1.0*Experiment.packet_count), Experiment.rtt()
 
 
   for n in filter(lambda x: x.paware, nodes):
@@ -48,8 +55,10 @@ def runsim(g):
   #  print n.rib
 
 
-for j in range(int(sys.argv[2])):
-  print "Run", j
+for j in range(topologies):
+  print "Topology", j
+  nodes = generate_topology(Experiment.size)
   for i in range(Experiment.size+1):
     Experiment.pnodes = i
-    val = runsim(nodes)
+    for k in range(iterations):
+      val = runsim(nodes)
