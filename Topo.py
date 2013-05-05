@@ -27,20 +27,30 @@ def setup_node(i):
   cbgpcommands.append("bgp router " + str(n.prefix[1]) + " add network " + str(n.prefix))
   return n
 
-def generate_topology(size, pcount):
+
+
+def generate_topology(size):
   
-  #make nodes
-  nodes = [setup_node(i) for i in range(size)]
 
   g = nx.barabasi_albert_graph(size, 1)
+
+  weightlist = []
   
-  #for i in range(size):
-  #  edges = random.sample(g.nodes(), 2)
-  #  g.add_edge(edges[0], edges[1])
+  for (u,v) in g.edges():
+    w = random.choice([0,1,2])
+    weightlist.append(w)
+    g[u][v]['weight'] = w
+
+  Experiment.weightavg = (1.0*reduce(lambda x, y:x+y, weightlist))/(1.0*len(weightlist))
 
 
-  #set up links
+  return g
+  
 
+def setup_nodes(g, size, pcount):
+  #make nodes
+  nodes = [setup_node(i) for i in range(size)]
+  
   for pnode in random.sample(nodes, pcount):
     pnode.paware=True
 
@@ -50,7 +60,16 @@ def generate_topology(size, pcount):
     #foreach neighbor
     for neighbor in g[node].keys():
       #add a link to the neighbor
-      cap = random.choice([4,20, 100])#random.randint(4,12)
+      linkweight = g[node][neighbor]['weight']
+      if linkweight == 0:
+        cap = 4
+        delay = 20
+      elif linkweight == 1:
+        cap = 20
+        delay = 10
+      else:
+        cap = 100
+        delay = 5
 
       link = Link(name=("Link"+str(node)+"-"+str(neighbor)), capacity=cap) #need to vary link capacity, but don't worry yet
 
@@ -58,13 +77,6 @@ def generate_topology(size, pcount):
       labelstr = str(node) +"."+ str(neighbor)
       revlabelstr = str(neighbor) +"."+ str(node)
 
-      #delay = random.*cap
-      if cap > 20:
-        delay = 5
-      if cap < 10:
-        delay = 20
-      else:
-        delay = 10
       link.setup(nodes[neighbor], delay) #set propdelay and destination
 
       if(not revlabelstr in linktable):
@@ -88,13 +100,15 @@ def generate_topology(size, pcount):
       cbgpcommands.append("bgp router "+str(source.prefix[1])+" debug dp " + str(destination.prefix))
   
   cbgpcommands.append("sim run")
+  cbgpcommands.append("sim clear")
 
-  p = subprocess.Popen(["cbgp"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+  p = subprocess.Popen(["cbgp"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
   cbgp_stdout = p.communicate(input="\n".join(cbgpcommands))[0]
   #sys.stderr.write(cbgp_stdout)
   cbgp_stdout = cbgp_stdout.splitlines()
-
+  p.stdin.close()
+  p.stdout.close()
 
   srcid = -1
   dstid = -1
