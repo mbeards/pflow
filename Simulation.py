@@ -48,7 +48,8 @@ def runsim(g):
   #  print n.rib
 
 
-
-for i in range(Experiment.size+1):
-  Experiment.pnodes = i
-  val = runsim(nodes)
+for j in range(int(sys.argv[2])):
+  print "Run", j
+  for i in range(Experiment.size+1):
+    Experiment.pnodes = i
+    val = runsim(nodes)
