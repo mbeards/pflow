@@ -13,6 +13,7 @@ class Route:
     self.hopcount = hopcount
     self.rttval = 999
     self.timestamp = 0
+    self.visited = False
 
   def rtt(self, rtt):
     self.timestamp = now()
@@ -42,7 +43,7 @@ class Route:
    return hash(self.ip) ^ hash(self.netmask) ^ hash(self.link.destination)
 
 class Flow:
-  #expiry: 0=open, 1=matched
+  #expiry: 0=open, 1=matched, 2=probe sent
   def __init__(self, ip_src, ip_dst, timestamp, last_seen, route, expiry):
     self.ip_src = ip_src
     self.ip_dst = ip_dst
@@ -92,11 +93,12 @@ class Node:
     return routes[-1].link
 
   def ftableclean(self):
-    ft = filter(lambda x: (x.expiry == 2 and now()-x.timestamp > 100), self.flow_table)
+    ft = filter(lambda x: (x.expiry == 2 and now()-x.timestamp > 600), self.flow_table)
     for f in ft:
       f.route.rtt(500) #300 as upper val for now.  probs needs to be proportional to table size?
+      print "unreturned ping"
       self.flow_table.remove(f)
-      #print "marked bad flow", f
+
       
     
 
@@ -112,7 +114,7 @@ class Node:
 
     if(len(oldroutes)>0):
       outroute = routes[0]
-      #print "need to check an old route!"
+      #print "checking", outroute
     else:
       routes.sort(key=(lambda x: x.rttval))
       outroute = routes[-1]
@@ -144,6 +146,8 @@ class Node:
       self.flow_table.remove(reverse_matches[0])
     else:
       self.flow_table.append(Flow(packet.ip_src, packet.ip_dst, now(), now(), outroute, 0))
+
+    outroute.visited = True
     return outroute.link
    
   def probe_return(self, packet):

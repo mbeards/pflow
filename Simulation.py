@@ -4,6 +4,7 @@ from Packet import *
 from Node import *
 import Experiment
 from Topo import *
+import sys
 
 Experiment.size = int(sys.argv[1])
 Experiment.pnodes = int(sys.argv[2])
@@ -18,13 +19,27 @@ def runsim():
 
   #print "Beginning simulation"
 
-  for n in random.sample(nodes, Experiment.size/2):
+
+  for n in nodes:#random.sample(nodes, Experiment.size/2):
     activate(n.generator, n.generator.generate(), at=0.0)
+
 
   simulate(until=10000)
 
   #Experiment.print_rtts()
   print Experiment.size, Experiment.pnodes, Experiment.packet_count, Experiment.drop_count, Experiment.rtt()
+
+
+  for n in filter(lambda x: x.paware, nodes):
+    unvisitedroutes = filter(lambda x: x.visited==False, n.rib)
+    if len(unvisitedroutes) > 0:
+      print n, "has unvisited routes", unvisitedroutes, "full rib", n.rib
+    
+    unmeasuredroutes = filter(lambda x: x.rttval==999, n.rib)
+    if len(unmeasuredroutes) >0:
+      print n, "has unmeasured routes", unmeasuredroutes, "full rib", n.rib
+
+
 
 
 runsim()

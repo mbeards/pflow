@@ -51,7 +51,7 @@ def generate_topology(size, pcount):
     #foreach neighbor
     for neighbor in g[node].keys():
       #add a link to the neighbor
-      cap = random.randint(4,12)
+      cap = random.choice([4,20])#random.randint(4,12)
 
       link = Link(name=("Link"+str(node)+"-"+str(neighbor)), capacity=cap) #need to vary link capacity, but don't worry yet
 
@@ -59,7 +59,11 @@ def generate_topology(size, pcount):
       labelstr = str(node) +"."+ str(neighbor)
       revlabelstr = str(neighbor) +"."+ str(node)
 
-      delay = random.randint(1,8)*cap
+      #delay = random.*cap
+      if cap < 10:
+        delay = 30
+      else:
+        delay = 5
       link.setup(nodes[neighbor], delay) #set propdelay and destination
 
       if(not revlabelstr in linktable):

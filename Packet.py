@@ -14,15 +14,11 @@ class Packet(Process):
     self.timestamp = now()
 
     while(True):
-      #print self, "Arrived at", current_node.name
 
-      #info to flowtimer goes here
-
+      #Handle arrival at destination prefix
       if(current_node.isowned(self.ip_dst)):
-        #print "Arrived at destination prefix"
 
         yield hold, self, 0.5
-        #turn around
 
         if(self.resp):
           #packet is a response
