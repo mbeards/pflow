@@ -6,6 +6,7 @@ import Experiment
 from Topo import *
 import sys
 import copy
+from datetime import datetime
 
 if(len(sys.argv) < 4):
   print "Usage: python " + sys.argv[0] + "TopologySize TopologyCount Iterations"
@@ -16,15 +17,26 @@ topologies = int(sys.argv[2])
 iterations = int(sys.argv[3])
 
 Experiment.weightavg = 0
+Experiment.m = False
 #Experiment.pnodes = int(sys.argv[2])
 #print "Building topology of", Experiment.size, "nodes with", sys.argv[2], "paware enabled"
 
+def stats():
+  congestion = (1.0*Experiment.drop_count)/Experiment.packet_count
+  overall_rtt = Experiment.rtt()
+  single_rtt = Experiment.single_rtt()
+  double_rtt = Experiment.double_rtt()
+
+  return " ".join(map(str,[congestion, overall_rtt[0], overall_rtt[1], single_rtt[0], single_rtt[1], double_rtt[0], double_rtt[1]]))
 
 def runsim(g):
+  starttime = datetime.now()
   initialize()
   Experiment.packet_count = 0
   Experiment.drop_count = 0
   Experiment.probe_count = 0
+  Experiment.current = 0
+  Experiment.old = 0
 
   #print "Beginning simulation"
   nodes = setup_nodes(g, Experiment.size, Experiment.pnodes)
@@ -36,8 +48,7 @@ def runsim(g):
 
   simulate(until=10000)
 
-  #Experiment.print_rtts()
-  print Experiment.size, Experiment.pnodes, Experiment.weightavg, Experiment.packet_count, Experiment.drop_count, Experiment.probe_count, (1.0*Experiment.drop_count)/(1.0*Experiment.packet_count), Experiment.rtt()
+  print (datetime.now()-starttime), Experiment.size, Experiment.pnodes, stats()
 
 
   for n in filter(lambda x: x.paware, nodes):
@@ -59,6 +70,13 @@ for j in range(topologies):
   print "Topology", j
   nodes = generate_topology(Experiment.size)
   for i in range(Experiment.size+1):
+    if(Experiment.size >= 10 and i%5 != 0):
+      continue
     Experiment.pnodes = i
     for k in range(iterations):
       val = runsim(nodes)
+    #  if i>0:
+    #    Experiment.m = True
+    #    val = runsim(nodes)
+    #    Experiment.m = False
+

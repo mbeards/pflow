@@ -35,9 +35,13 @@ def generate_topology(size):
   g = nx.barabasi_albert_graph(size, 1)
 
   weightlist = []
+  choices = [0,1,2]
+  if Experiment.size > 10:
+    choices.append(3)
+    choices.append(4)
   
   for (u,v) in g.edges():
-    w = random.choice([0,1,2])
+    w = random.choice(choices)
     weightlist.append(w)
     g[u][v]['weight'] = w
 
@@ -67,10 +71,15 @@ def setup_nodes(g, size, pcount):
       elif linkweight == 1:
         cap = 20
         delay = 10
-      else:
+      elif linkweight ==2:
         cap = 100
         delay = 5
-
+      elif linkweight == 3:
+        cap = 1000
+        delay = 5
+      else:
+        cap = 2000
+        delay = 2
       link = Link(name=("Link"+str(node)+"-"+str(neighbor)), capacity=cap) #need to vary link capacity, but don't worry yet
 
       #map node IPs to link pointers

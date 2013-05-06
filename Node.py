@@ -12,16 +12,23 @@ class Route:
     self.link = link
     self.hopcount = hopcount
     self.rttval = 999
-    self.timestamp = 0
+    self.timestamp = now()
+    self.m = 0
     self.visited = False
 
   def rtt(self, rtt):
-    self.timestamp = now()
     if self.rttval == 999:
       self.rttval = rtt
     else:
       #Moving average
+      oldrtt = self.rttval
       self.rttval = (0.5*rtt)+ (0.5 * self.rttval)
+      if self.m == 0:
+        m = self.rttval
+      else:
+        m = (1.0*(self.rttval - oldrtt))/(now() - self.timestamp)
+    self.timestamp = now()
+    
   
   #Takes IP as an Int!
   def match(self, ip):
@@ -69,6 +76,9 @@ class Node:
 
   def __repr__(self):
     if(self.paware):
+      if(Experiment.m):
+        return "mPaware " + self.name +" "+str(self.prefix)
+
       return "Paware " + self.name +" "+str(self.prefix)
     else:
       return "naware " + self.name +" "+str(self.prefix)
@@ -109,14 +119,29 @@ class Node:
     reverse_matches = filter(lambda x: (x.ip_dst == packet.ip_src and x.ip_src == packet.ip_dst), self.flow_table)
 
     routes = filter(lambda x: x.match(ip), self.rib)#and x.link.destination!=lasthop, self.rib)
-    oldroutes = filter(lambda x: now()-x.timestamp > 100 or x.rttval == 999, routes)
+    oldroutes = filter(lambda x: now()-x.timestamp > 300 or x.rttval == 999, routes)
 
-    if(len(oldroutes)>0):
-      outroute = routes[0]
-      #print "checking", outroute
+    if(len(oldroutes)>0 and random.random() < 0.5):
+      outroute = oldroutes[0]
+      Experiment.old = Experiment.old + 1
     else:
       routes.sort(key=(lambda x: x.rttval))
-      outroute = routes[-1]
+      if Experiment.m and len(routes)>1:
+        r1 = routes[0]
+        r2 = routes[1]
+        if r2.rttval - r1.rttval <= (r1.rttval/2):
+          m1frac = 1.0*r1.m/(r1.m+r2.m)
+          m2frac = 1.0*r2.m/(r1.m+r2.m)
+          if(random.random() <= m2frac):
+            outroute=r2
+          else:
+            outroute=r1
+        else:
+          outroute = r1
+        
+      else:
+        Experiment.current = Experiment.current + 1
+        outroute = routes[0]
 
     if(len(forward_matches) > 0) and not packet.resp:
       f = forward_matches[0]
