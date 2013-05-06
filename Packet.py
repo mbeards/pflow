@@ -50,7 +50,9 @@ class Packet(Process):
       #drop packet if link is full, continue otherwise
       if(send_time - enqueue_time > retransmission_timeout):
         #print "Dropped packet after waiting", send_time-enqueue_time
-        Experiment.drop_count = Experiment.drop_count+1
+        if(not self.probe):
+          Experiment.drop_count = Experiment.drop_count+1
+          Experiment.add_rtt(now() - self.timestamp, None, None)
         yield release, self, link
         return
       yield hold, self, link.delay
