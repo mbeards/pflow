@@ -105,7 +105,10 @@ class Node:
   def ftableclean(self):
     ft = filter(lambda x: (x.expiry == 2 and now()-x.timestamp > 600), self.flow_table)
     for f in ft:
-      f.route.rtt(500) #300 as upper val for now.  probs needs to be proportional to table size?
+      if f.route.rttval < 900:
+        f.route.rtt(2*f.route.rttval)
+      else:
+        f.route.rtt(200)
       self.flow_table.remove(f)
 
       
@@ -120,6 +123,7 @@ class Node:
 
     routes = filter(lambda x: x.match(ip), self.rib)#and x.link.destination!=lasthop, self.rib)
     oldroutes = filter(lambda x: now()-x.timestamp > 300 or x.rttval == 999, routes)
+
 
     if(len(oldroutes)>0 and random.random() < 0.5):
       outroute = oldroutes[0]
@@ -174,6 +178,7 @@ class Node:
       self.flow_table.append(Flow(packet.ip_src, packet.ip_dst, now(), now(), outroute, 0))
 
     outroute.visited = True
+    #print "selected", outroute, "from", routes
     return outroute.link
    
   def probe_return(self, packet):

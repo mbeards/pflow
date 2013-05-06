@@ -32,7 +32,7 @@ def setup_node(i):
 def generate_topology(size):
   
 
-  g = nx.barabasi_albert_graph(size, 1)
+  g = nx.barabasi_albert_graph(size, 3)
 
   weightlist = []
   choices = [0,1,2]

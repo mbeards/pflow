@@ -42,7 +42,7 @@ def runsim(g):
   nodes = setup_nodes(g, Experiment.size, Experiment.pnodes)
 
 
-  for n in nodes:#random.sample(nodes, Experiment.size/2):
+  for n in random.sample(nodes, Experiment.size/2):
     activate(n.generator, n.generator.generate(), at=0.0)
 
 
@@ -70,7 +70,9 @@ for j in range(topologies):
   print "Topology", j
   nodes = generate_topology(Experiment.size)
   for i in range(Experiment.size+1):
-    if(Experiment.size >= 10 and i%5 != 0):
+    if(Experiment.size > 10 and i%5 != 0):
+      continue
+    if(Experiment.size <= 10 and i%2 != 0):
       continue
     Experiment.pnodes = i
     for k in range(iterations):

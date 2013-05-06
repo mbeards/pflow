@@ -5,7 +5,10 @@ rtt_table = []
 
 
 def add_rtt(rtt, srcnode, dstnode):
-  rtt_table.append((now(), rtt, srcnode.paware, dstnode.paware))
+  if(not srcnode or not dstnode):
+    rtt_table.append((now(), 200, False, False))
+  else:
+    rtt_table.append((now(), rtt, srcnode.paware, dstnode.paware))
 
 def print_rtts():
   #print rtt_table
