@@ -37,7 +37,7 @@ class Route:
     return False
 
   def __repr__(self):
-    return str(self.prefix)+" "+str(self.link)+" rtt " + str(self.rttval)
+    return str(self.prefix)+" "+str(self.link)+" rtt " + str(self.rttval)+" hops "+str(self.hopcount)
 
   def __cmp__(self, other):
     if self.ip == other.ip and self.netmask==other.netmask and self.link==other.link:
@@ -58,6 +58,9 @@ class Flow:
     self.last_seen = last_seen
     self.route = route
     self.expiry = 0
+  
+  def __repr__(self):
+    return " ".join(map(str, [IPAddress(self.ip_src), "->", IPAddress(self.ip_dst), self.route]))
 
 
 class Node:
@@ -95,18 +98,21 @@ class Node:
   def get_route(self, ip, lasthop, packet):
     if(self.paware):
       return self.p_get_route(ip, lasthop, packet)
-    routes = filter(lambda x: x.match(ip), self.rib)#and x.link.destination!=lasthop, self.rib)
+    routes = filter(lambda x: x.match(ip) and (not x.link.destination in packet.path), self.rib)
     routes.sort(key=(lambda x: x.length))
     if(len(routes) == 0):
-      print "Finding route to", IPAddress(ip), "from", self, "lasthop was", lasthop
-      print self.rib
-    return routes[-1].link
+      routes = filter(lambda x: x.match(ip), self.rib)
+      #print "Finding route to", IPAddress(ip), "from", self, "lasthop was", lasthop
+      #print self.rib
+    return routes[0].link
 
   def ftableclean(self):
-    ft = filter(lambda x: (x.expiry == 2 and now()-x.timestamp > 600), self.flow_table)
+    #print len(self.flow_table)
+    self.flow_table = self.flow_table[0:400]
+    ft = filter(lambda x: (x.expiry == 2 and now()-x.timestamp > 100), self.flow_table)
     for f in ft:
-      if f.route.rttval < 900:
-        f.route.rtt(2*f.route.rttval)
+      if f.route.rttval < 100:
+        f.route.rtt(f.route.rttval + 50)
       else:
         f.route.rtt(200)
       self.flow_table.remove(f)
@@ -121,15 +127,18 @@ class Node:
     forward_matches = filter(lambda x: (x.ip_src == packet.ip_src and x.ip_dst == packet.ip_dst), self.flow_table)
     reverse_matches = filter(lambda x: (x.ip_dst == packet.ip_src and x.ip_src == packet.ip_dst), self.flow_table)
 
-    routes = filter(lambda x: x.match(ip), self.rib)#and x.link.destination!=lasthop, self.rib)
+    routes = filter(lambda x: x.match(ip) and (not x.link.destination in packet.path), self.rib)#and x.link.destination!=lasthop, self.rib)
+    if(len(routes) == 0):
+      routes = filter(lambda x: x.match(ip), self.rib)
+
     oldroutes = filter(lambda x: now()-x.timestamp > 300 or x.rttval == 999, routes)
 
 
-    if(len(oldroutes)>0 and random.random() < 0.5):
+    if(len(oldroutes)>0 and random.random() < 0.25):
       outroute = oldroutes[0]
       Experiment.old = Experiment.old + 1
     else:
-      routes.sort(key=(lambda x: x.rttval))
+      routes.sort(key=(lambda x: x.length*x.rttval))
       if Experiment.m and len(routes)>1:
         r1 = routes[0]
         r2 = routes[1]
@@ -146,6 +155,7 @@ class Node:
       else:
         Experiment.current = Experiment.current + 1
         outroute = routes[0]
+        #print "forward", packet, "along", outroute, "from", routes
 
     if(len(forward_matches) > 0) and not packet.resp:
       f = forward_matches[0]
@@ -156,7 +166,7 @@ class Node:
         f.expiry = 1
         return f.route.link
       else:
-        if (now() - f.timestamp > 100):
+        if (now() - f.timestamp > 200 and random.random() < .25):
           f.expiry = 2
           Experiment.packet_count = Experiment.packet_count+1
           Experiment.probe_count = Experiment.probe_count+1
@@ -167,7 +177,8 @@ class Node:
           p.probe = True
           activate(p, p.run(self))
 
-    elif(len(reverse_matches) > 0):
+    if(len(reverse_matches) > 0):
+      Experiment.revmatch = Experiment.revmatch+1
       #if(reverse_matches[0].expiry == 2):
         #print "ping came back"
       #also cool
@@ -180,6 +191,16 @@ class Node:
     outroute.visited = True
     #print "selected", outroute, "from", routes
     return outroute.link
+
+  def arrive_home(self, packet):
+    reverse_matches = filter(lambda x: (x.ip_dst == packet.ip_src and x.ip_src == packet.ip_dst), self.flow_table)
+
+    if(len(reverse_matches) > 0):
+      Experiment.revmatch = Experiment.revmatch+1
+      rtt = now() - reverse_matches[0].timestamp
+      reverse_matches[0].route.rtt(rtt)
+    #else:
+    #  print packet, "came home with no revmatches", self.flow_table
    
   def probe_return(self, packet):
     reverse_matches = filter(lambda x: (x.ip_dst == packet.ip_src and x.ip_src == packet.ip_dst), self.flow_table)
@@ -208,6 +229,8 @@ class Generator(Process):
       Experiment.packet_count = Experiment.packet_count+1
       addr = random.randint(0,Experiment.size-1)
       ipstr = "10.0."+str(addr)+".1"
+      if(IPAddress(ipstr) in self.parent.prefix):
+        continue
 
       p = Packet(name="packet")
       p.ip_dst = int(IPAddress(ipstr))
@@ -216,6 +239,6 @@ class Generator(Process):
       p.probe = False
 
       activate(p, p.run(self.parent))
-      yield hold, self, random.randint(1, 4)
+      yield hold, self, random.randint(20, 300)
 
 

@@ -7,6 +7,7 @@ from Topo import *
 import sys
 import copy
 from datetime import datetime
+import networkx as nx
 
 if(len(sys.argv) < 4):
   print "Usage: python " + sys.argv[0] + "TopologySize TopologyCount Iterations"
@@ -27,7 +28,7 @@ def stats():
   single_rtt = Experiment.single_rtt()
   double_rtt = Experiment.double_rtt()
 
-  return " ".join(map(str,[congestion, overall_rtt[0], overall_rtt[1], single_rtt[0], single_rtt[1], double_rtt[0], double_rtt[1]]))
+  return " ".join(map(str,[congestion, overall_rtt[0], overall_rtt[1], Experiment.packet_count, Experiment.drop_count, Experiment.probe_count, Experiment.revmatch, Experiment.cycles]))
 
 def runsim(g):
   starttime = datetime.now()
@@ -37,6 +38,8 @@ def runsim(g):
   Experiment.probe_count = 0
   Experiment.current = 0
   Experiment.old = 0
+  Experiment.revmatch = 0
+  Experiment.cycles = 0
 
   #print "Beginning simulation"
   nodes = setup_nodes(g, Experiment.size, Experiment.pnodes)
@@ -65,6 +68,8 @@ def runsim(g):
   #for n in nodes:
   #  print n.rib
 
+print "time, size, nodes, congestion, rtt, rttrange, pcount, dcount, pocount, rmcount cyc"
+
 
 for j in range(topologies):
   print "Topology", j
@@ -72,7 +77,7 @@ for j in range(topologies):
   for i in range(Experiment.size+1):
     if(Experiment.size > 10 and i%5 != 0):
       continue
-    if(Experiment.size <= 10 and i%2 != 0):
+    if(Experiment.size == 10 and i%2 != 0):
       continue
     Experiment.pnodes = i
     for k in range(iterations):

@@ -13,7 +13,7 @@ linktable = {}
 cbgpcommands = []
 
 route_header_re = re.compile("AS([0-9]+), AS[0-9]+:10\.0\.[0-9]+\.1, 10\.0\.([0-9]+)\.0\/24")
-route_re = re.compile("\*[> ] 10\.0\.[0-9]+\.0/24\t10\.0\.([0-9]+)\.1 *")
+route_re = re.compile("\*[> ] 10\.0\.[0-9]+\.0/24\t10\.0\.([0-9]+)\.1.*\t.*\t.*\t(.*)\ti.*")
 
 def setup_node(i):
   n = Node(name=("Node"+str(i)))
@@ -141,8 +141,9 @@ def setup_nodes(g, size, pcount):
     elif state == 2 and route_re.match(line):
       r = route_re.match(line)
       nexthopid = r.group(1)
+      hoplength = len(r.group(2).split())
       l = linktable[str(srcid)+"."+str(nexthopid)]   
-      bestroute = Route(IPNetwork("10.0."+str(dstid)+".0/24"), l, 0)
+      bestroute = Route(IPNetwork("10.0."+str(dstid)+".0/24"), l, hoplength)
       allroutes.append(bestroute)
       state = 3
     elif state >= 3 and (line == "[ Shortest AS-PATH ]" or line == "[ Eligible routes: ]"):
@@ -150,8 +151,9 @@ def setup_nodes(g, size, pcount):
     elif state == 4 and route_re.match(line):
       r = route_re.match(line)
       nexthopid = r.group(1)
+      hoplength = len(r.group(2).split())
       l = linktable[str(srcid)+"."+str(nexthopid)]   
-      rt = Route(IPNetwork("10.0."+str(dstid)+".0/24"), l, 0)
+      rt = Route(IPNetwork("10.0."+str(dstid)+".0/24"), l, hoplength)
       allroutes.append(rt)
     elif state ==4 or (line == "[ Best route ]" and state!=0):
       state = 0
