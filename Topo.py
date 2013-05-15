@@ -36,9 +36,9 @@ def generate_topology(size):
 
   weightlist = []
   choices = [0,1,2]
-  if Experiment.size > 10:
-    choices.append(3)
-    choices.append(4)
+  #if Experiment.size > 10:
+  #  choices.append(3)
+  #  choices.append(4)
   
   for (u,v) in g.edges():
     w = random.choice(choices)

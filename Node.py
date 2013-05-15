@@ -239,6 +239,6 @@ class Generator(Process):
       p.probe = False
 
       activate(p, p.run(self.parent))
-      yield hold, self, random.randint(20, 300)
+      yield hold, self, random.randint(2, 30)
 
 

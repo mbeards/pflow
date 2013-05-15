@@ -75,6 +75,8 @@ for j in range(topologies):
   print "Topology", j
   nodes = generate_topology(Experiment.size)
   for i in range(Experiment.size+1):
+    if(Experiment.size > 50 and i%20 != 0 and i%25!=0):
+      continue
     if(Experiment.size > 10 and i%5 != 0):
       continue
     if(Experiment.size == 10 and i%2 != 0):
