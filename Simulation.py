@@ -27,8 +27,12 @@ def stats():
   overall_rtt = Experiment.rtt()
   single_rtt = Experiment.single_rtt()
   double_rtt = Experiment.double_rtt()
+  if(len(Experiment.ribdeltas) != 0):
+    ribdeltas = reduce(lambda x, y: x+y, Experiment.ribdeltas, 0.0)/len(Experiment.ribdeltas)
+  else:
+    ribdeltas = 0
 
-  return " ".join(map(str,[congestion, overall_rtt[0], overall_rtt[1], Experiment.packet_count, Experiment.drop_count, Experiment.probe_count, Experiment.revmatch, Experiment.cycles]))
+  return " ".join(map(str,[congestion, overall_rtt[0], overall_rtt[1], Experiment.packet_count, Experiment.drop_count, Experiment.probe_count, Experiment.revmatch, Experiment.cycles, ribdeltas]))
 
 def runsim(g):
   starttime = datetime.now()
@@ -40,6 +44,7 @@ def runsim(g):
   Experiment.old = 0
   Experiment.revmatch = 0
   Experiment.cycles = 0
+  Experiment.ribdeltas = []
 
   #print "Beginning simulation"
   nodes = setup_nodes(g, Experiment.size, Experiment.pnodes)
@@ -51,24 +56,34 @@ def runsim(g):
 
   simulate(until=10000)
 
+  for n in filter(lambda x: x.paware, nodes):
+    for i in range(Experiment.size):
+      ip = int(IPAddress("10.0."+str(i)+".1"))
+      routes = filter(lambda x: x.match(ip), n.rib)
+      routes.sort(key=(lambda x: x.length*x.rttval))
+      if(len(routes) > 1 and routes[1].rttval - routes[0].rttval < 200):
+        Experiment.ribdeltas.append(routes[1].rttval - routes[0].rttval)
+
+
   print (datetime.now()-starttime), Experiment.size, Experiment.pnodes, stats()
 
 
-  for n in filter(lambda x: x.paware, nodes):
-    unvisitedroutes = filter(lambda x: x.visited==False, n.rib)
-    if len(unvisitedroutes) > 0:
+  #for n in filter(lambda x: x.paware, nodes):
+  #  unvisitedroutes = filter(lambda x: x.visited==False, n.rib)
+  #  if len(unvisitedroutes) > 0:
   #    print n, "has unvisited routes", unvisitedroutes, "full rib", n.rib
-      return -1
+  #    return -1
     
-    unmeasuredroutes = filter(lambda x: x.rttval==999, n.rib)
-    if len(unmeasuredroutes) >0:
+  #  unmeasuredroutes = filter(lambda x: x.rttval==999, n.rib)
+  #  if len(unmeasuredroutes) >0:
   #    print n, "has unmeasured routes", unmeasuredroutes, "full rib", n.rib
-      return -1
+  #    return -1
+
 
   #for n in nodes:
   #  print n.rib
 
-print "time, size, nodes, congestion, rtt, rttrange, pcount, dcount, pocount, rmcount cyc"
+print "time, size, nodes, congestion, rtt, rttrange, pcount, dcount, pocount, rmcount cyc rd"
 
 
 for j in range(topologies):

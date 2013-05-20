@@ -9,19 +9,23 @@ firstlinere = re.compile("time.*")
 topolinere = re.compile("Topology ([0-9]+)")
 datalinere = re.compile("[0-9].*")
 
-termstring = "set terminal postscript eps 26\nunset key"
 outextension = ".eps'"
+termstring = "set terminal postscript eps 26\nunset key"
+parser = argparse.ArgumentParser(description="Plot pflow simulation data")
+parser.add_argument('--average', '-a', action='store_true')
+parser.add_argument('--norm', '-n', action='store_true')
+parser.add_argument('--overhead', '-o', action='store_true')
+parser.add_argument('--runs', '-r', action='store_true')
+parser.add_argument('--stats', '-s', action='store_true')
+parser.add_argument('--congestion', '-c', action='store_true')
+parser.add_argument('--title', '-t')
+argv=parser.parse_args(sys.argv[1:]) 
 
 def main():
-  parser = argparse.ArgumentParser(description="Plot pflow simulation data")
-  parser.add_argument('--average', '-a', action='store_true')
-  parser.add_argument('--norm', '-n', action='store_true')
-  parser.add_argument('--overhead', '-o', action='store_true')
-  parser.add_argument('--runs', '-r', action='store_true')
-  parser.add_argument('--stats', '-s', action='store_true')
-  parser.add_argument('--congestion', '-c', action='store_true')
 
-  argv=parser.parse_args(sys.argv[1:]) 
+  
+
+  
   if not argv.average and not argv.norm and not argv.overhead and not argv.runs and not argv.stats and not argv.congestion:
     print "--average, --overhead, --norm"
     return
@@ -69,6 +73,8 @@ def stddev(l):
 def overhead(runs):
   results = []
   termstring = "set terminal postscript eps 13\nunset key"
+  if argv.title:
+    termstring = termstring + "\n set title '" + argv.title + "'"
   print termstring 
   print "set output 'overhead"+outextension
   print "set xlabel 'Ratio of pflow nodes to non-pflow nodes'"
@@ -139,7 +145,12 @@ def normalize(runs):
 
 def average(runs):
   results = []
-  print termstring
+  ltermstring = termstring
+
+  if argv.title:
+    ltermstring = ltermstring + "\n set title '" + argv.title + "'"
+
+  print ltermstring
   print "set output 'average"+outextension
   print "set xlabel 'Normalized RTT'"
   print "set ylabel 'Number of pflow nodes'"
@@ -270,7 +281,7 @@ def stats(runs):
       average_congestion[r] = mean(members)
     for row in rows:
       r = int(row)
-      if(average_congestion[0] < .05):
+      if(average_congestion[0] < .01):
         continue
       elif(average_congestion[r]/average_congestion[0] <= 1):
         results.append((1.0*r/maxnodes, average_congestion[r]/average_congestion[0]))
@@ -280,6 +291,9 @@ def stats(runs):
   q2 = map(lambda x: x[1], filter(lambda x: x[0] < .75 and x[0] >=.5, results))
   q3 = map(lambda x: x[1], filter(lambda x: x[0] < 1 and x[0] >=.75, results))
   q4 = map(lambda x: x[1], filter(lambda x: x[0] >.75, results))
+
+  if(len(q1)==0 or len(q2)==0 or len(q3)==0 or len(q4) == 0):
+    return
 
   print "Normalized Congestion:", 1, mean(q1), mean(q2), mean(q3), mean(q4)
 
