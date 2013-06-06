@@ -45,9 +45,15 @@ def runsim(g):
   Experiment.revmatch = 0
   Experiment.cycles = 0
   Experiment.ribdeltas = []
+  #(time, srcnode, dstnode, selectedRTT, averageRTT)
+  Experiment.routemetrics = []
 
   #print "Beginning simulation"
   nodes = setup_nodes(g, Experiment.size, Experiment.pnodes)
+  pnodes = filter(lambda x: x.paware, nodes)
+  if(len(pnodes) >0):
+    pnodes[0].meter = True
+    pnodes[0].meteraddr = int(IPAddress("10.0.9.1"))
 
 
   for n in random.sample(nodes, Experiment.size/2):
@@ -66,6 +72,8 @@ def runsim(g):
 
 
   print (datetime.now()-starttime), Experiment.size, Experiment.pnodes, stats()
+  for m in Experiment.routemetrics:
+    print Experiment.size, Experiment.pnodes, m[0], m[3], m[4]
 
 
   #for n in filter(lambda x: x.paware, nodes):
@@ -89,7 +97,7 @@ print "time, size, nodes, congestion, rtt, rttrange, pcount, dcount, pocount, rm
 for j in range(topologies):
   print "Topology", j
   nodes = generate_topology(Experiment.size)
-  for i in range(Experiment.size+1):
+  for i in [10]:#range(Experiment.size+1):
     if(Experiment.size > 50 and i%20 != 0 and i%25!=0):
       continue
     if(Experiment.size > 10 and i%5 != 0):

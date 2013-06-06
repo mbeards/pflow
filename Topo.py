@@ -55,8 +55,11 @@ def setup_nodes(g, size, pcount):
   #make nodes
   nodes = [setup_node(i) for i in range(size)]
   
-  for pnode in random.sample(nodes, pcount):
-    pnode.paware=True
+  if pcount >= 1:
+    nodes[0].paware = True
+  if pcount > 1:
+    for pnode in random.sample(nodes, pcount-1):
+      pnode.paware=True
 
   #foreach node
   for node in g:

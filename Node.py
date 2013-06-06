@@ -76,6 +76,7 @@ class Node:
     self.paware = False
     self.forward_delay = random.randint(0,5)
     self.flow_table = []
+    self.meter = False
 
   def __repr__(self):
     if(self.paware):
@@ -130,6 +131,14 @@ class Node:
     routes = filter(lambda x: x.match(ip) and (not x.link.destination in packet.path), self.rib)#and x.link.destination!=lasthop, self.rib)
     if(len(routes) == 0):
       routes = filter(lambda x: x.match(ip), self.rib)
+    elif(self.meter and self.meteraddr == ip):
+      routes.sort(key=(lambda x: x.length*x.rttval))
+      pickedroute = routes[0].rttval
+      others = 1.0*reduce(lambda x, y: x+y.rttval, routes, 0) / (len(routes))
+      p = self.ip
+      d = ip
+      Experiment.routemetrics.append((now(), p, d, pickedroute, others))
+
 
     oldroutes = filter(lambda x: now()-x.timestamp > 300 or x.rttval == 999, routes)
 
